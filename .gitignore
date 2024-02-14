@@ -1,2 +1,4 @@
 venv/
 test.ipynb
+call_history.pdf
+__pycache__/
