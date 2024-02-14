@@ -1,27 +1,9 @@
 import streamlit as st
 import os
 from langchain_openai import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationChain
-from langchain.prompts.prompt import PromptTemplate
 
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 llm = ChatOpenAI(openai_api_key=openai_api_key, model='gpt-3.5-turbo-0125', temperature=0.5)
-template = """
-{input}
-
-The current conversation history is: {history}
-
-You will play the role of the human and respond to the recipient based on the input provided that is consistent with the conversation history and the reason for the call.
-"""
-prompt_template = PromptTemplate(input_variables=["history", "input"], template=template)
-
-chain = ConversationChain(
-    llm = llm,
-    memory = ConversationBufferMemory(return_messages=True),
-    verbose=True,
-    prompt=prompt_template
-)
 
 recipient = "Dominos Pizza"
 reason = "ordering pizza"
@@ -31,33 +13,46 @@ st.title("ComfortCall")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "chain" not in st.session_state:
-    st.session_state.chain = chain
+if "llm" not in st.session_state:
+    st.session_state.llm = llm
     
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    if message["role"] == "user":
+        with st.chat_message(message["role"]):
+            st.markdown(f'You: {message["content"]}')
+    else:
+        with st.chat_message(message["role"]):
+            st.markdown(f'{recipient}: {message["content"]}')
         
 if prompt := st.chat_input('What do you want to say next?'):
     
-    updated_prompt = f"""
-    Human is holding a phone conversation with: {recipient}
-    The reason for the call is: {reason}
-    Human provides this input: {prompt}
+    history = ''.join([message['role'] + ': ' + message['content'] + '\n ' for message in st.session_state.messages])
+    
+    full_prompt = f"""
+Human is holding a phone conversation with: {recipient}
+
+The reason for the call is: {reason}
+
+Human provides this input: {prompt}
+
+The current conversation history is:
+{history}
+
+You will play the role of the human and respond to the recipient based on the input provided that is consistent with the conversation history and the reason for the call. Only return what the human will say out loud, nothing else.
     """
     
     with st.spinner("Thinking what you should say..."):
-        user_response = st.session_state.chain.invoke(input = updated_prompt)['response']
+        user_response = st.session_state.llm.invoke(full_prompt).content
         
     with st.chat_message("user"):
-        st.markdown(user_response)
+        st.markdown(f'You: {user_response}')
         
     st.session_state.messages.append({'role': 'user', 'content': user_response})
     
-    recipient_response = 'Yup I got it'
+    recipient_response = input("Recipient: ")
         
-    with st.chat_message("Recipient"):
-        st.markdown(recipient_response)
+    with st.chat_message("recipient"):
+        st.markdown(f'{recipient}: {recipient_response}')
         
     st.session_state.messages.append({'role': 'recipient', 'content': recipient_response})
 
