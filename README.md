@@ -1,2 +1,2 @@
-# ComfortCall
-ComfortCall is a user-friendly web application leveraging AI technology to facilitate anxiety-free phone conversations for individuals with communication challenges, allowing users to input prompts and receive natural responses seamlessly integrated into the phone conversation, facilitated via the Twilio platform.
+# ChatCraft
+ChatCraft is a conversational simulation tool that allows users to practice communication skills in various contexts. With its AI-enhanced interactions, users can simulate realistic conversations tailored to specific relationships, receiving personalized feedback for improvement. Whether you're a language learner, sales professional, job seeker, or educator, ChatCraft offers a safe and interactive environment to enhance your communication proficiency and boost confidence in social interactions, interviews, or professional engagements. 

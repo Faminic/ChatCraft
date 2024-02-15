@@ -1,16 +1,17 @@
 import streamlit as st
 import os
+import time
 from langchain_openai import ChatOpenAI
-from streamlit_extras.switch_page_button import switch_page
-from utils import create_call_history_pdf
+from utils import create_chat_history_pdf
+time.sleep(0.1)
 
-st.title("ComfortCall Settings")
+st.title("ChatCraft Settings")
 
 if "openai_api_key" not in st.session_state:
     st.session_state.openai_api_key = os.environ.get("OPENAI_API_KEY")
     
 if "llm" not in st.session_state:
-    llm = ChatOpenAI(openai_api_key=st.session_state.openai_api_key, model='gpt-3.5-turbo-0125', temperature=0.5)
+    llm = ChatOpenAI(openai_api_key=st.session_state.openai_api_key, model='gpt-3.5-turbo-0125', temperature=0.8)
     st.session_state.llm = llm
 
 if "messages" not in st.session_state:
@@ -19,63 +20,74 @@ if "messages" not in st.session_state:
 if "recipient" not in st.session_state:
     st.session_state.recipient = ""
 
-if "phone_number" not in st.session_state:
-    st.session_state.phone_number = ""
+if "relationship" not in st.session_state:
+    st.session_state.relationship = ""
     
-if "reason" not in st.session_state:
-    st.session_state.reason = ""
+if "context" not in st.session_state:
+    st.session_state.context = ""
+
+if "specific_instructions" not in st.session_state:
+    st.session_state.specific_instructions = ""
 
 def submit_recipient():
     st.session_state.recipient = st.session_state.recipient_widget
     st.session_state.recipient_widget = ""
     
-def submit_phone_number():
-    st.session_state.phone_number = st.session_state.phone_number_widget
-    st.session_state.phone_number_widget = ""
+def submit_relationship():
+    st.session_state.relationship = st.session_state.relationship_widget
+    st.session_state.relationship_widget = ""
 
-def submit_reason():
-    st.session_state.reason = st.session_state.reason_widget
-    st.session_state.reason_widget = ""
+def submit_context():
+    st.session_state.context = st.session_state.context_widget
+    st.session_state.context_widget = ""
+    
+def submit_specific_instructions():
+    st.session_state.specific_instructions = st.session_state.specific_instructions_widget
+    st.session_state.specific_instructions_widget = ""
 
-st.text_input(label = "Who are you calling?", key="recipient_widget", help = "Type the name of who you are calling", on_change=submit_recipient)
+st.text_input(label = "Who do you want to message?", key="recipient_widget", help = "Type who you want to message", on_change=submit_recipient)
 if st.session_state.recipient:
     st.write(f"Current Recipient: {st.session_state.recipient}")
-    
-st.text_input(label = "What is the recipient's phone number?", key="phone_number_widget", help = "Type the phone number of the recipient", on_change=submit_phone_number)
-if st.session_state.phone_number:
-    st.write(f"Current Phone Number: {st.session_state.phone_number}")
-    
-st.text_input(label = "What is the reason for the call?", key="reason_widget", help = "Type the reason for the call", on_change=submit_reason)
-if st.session_state.reason:
-    st.write(f"Current Reason: {st.session_state.reason}")
 
-create_call_history_pdf(st.session_state.messages, st.session_state.recipient) #create empty call history PDF
-
-st.subheader("Please fill out all the above settings before starting the call")
-next_page = st.button(label = 'Start Call', key = 'switch_page')
-if next_page:
-    #start twilio call from here  
-    st.switch_page("pages/📱_Call.py")
+st.text_input(label = f"What is your relationship with {st.session_state.recipient}?", key="relationship_widget", help = f"Type your relationship with {st.session_state.recipient}", on_change=submit_relationship)
+if st.session_state.relationship:
+    st.write(f"Current Relationship: {st.session_state.relationship}")
     
-st.subheader("Please press here to end the call and download the call history as a PDF")
-#End Call and download call history as PDF
-with open("call_history.pdf", "rb") as file:
-    download_call_history = st.download_button(
-        label="End Call and Download Call History", 
-        key="end_call", 
-        help="Click to end the call and download call history",
-        on_click=create_call_history_pdf(st.session_state.messages, st.session_state.recipient),
+st.text_input(label = "What is the context behind this conversation?", key="context_widget", help = "Type the context for the conversation", on_change=submit_context)
+if st.session_state.context:
+    st.write(f"Current Context: {st.session_state.context}")
+    
+st.text_input(label = "Any specific instructions you want to give to the AI? You can leave this blank.", key="specific_instructions_widget", help = "Type any further details you want to add", on_change=submit_specific_instructions)
+if st.session_state.specific_instructions:
+    st.write(f"Further Details: {st.session_state.specific_instructions}")
+
+create_chat_history_pdf(st.session_state.messages, st.session_state.recipient) #create empty chat history PDF
+
+st.subheader("Please fill out all the above settings before starting the conversation")
+next_page = st.button(label = 'Start Conversation', key = 'switch_page')
+if next_page: 
+    st.switch_page("pages/💬_Chat.py")
+    
+st.subheader("Please click below to end the conversation and download the chat history as a PDF")
+
+with open("chat_history.pdf", "rb") as file:
+    download_chat_history = st.download_button(
+        label="End Conversation and Download Chat History", 
+        key="end_chat", 
+        help="Click to end the conversation and download the chat history",
+        on_click=create_chat_history_pdf(st.session_state.messages, st.session_state.recipient),
         data = file,
-        file_name="call_history.pdf",
+        file_name="chat_history.pdf",
         mime="application/octet-stream"
     )
     
-if download_call_history:
+if download_chat_history:
     st.session_state.messages = []
     st.session_state.recipient = ""
-    st.session_state.phone_number = ""
-    st.session_state.reason = ""
-    st.session_state.llm = ChatOpenAI(openai_api_key=st.session_state.openai_api_key, model='gpt-3.5-turbo-0125', temperature=0.5)
+    st.session_state.relationship = ""
+    st.session_state.context = ""
+    st.session_state.specific_instructions = ""
+    st.session_state.llm = ChatOpenAI(openai_api_key=st.session_state.openai_api_key, model='gpt-3.5-turbo-0125', temperature=0.8)
     st.rerun()  
     
     
